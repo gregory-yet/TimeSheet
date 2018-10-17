@@ -1,6 +1,7 @@
 /**
- * TimeSheet.js [v1.0]
+ * TimeSheet.js [v1.1]
  * Li Bin
+ * Contributor : Grégory Gérard
  */
 
 (function ($) {
@@ -58,6 +59,8 @@
     * 表格类
     * */
     var CSheet = function(opt){
+
+    	this.mode = true;
 
         /*
         * opt : {
@@ -332,7 +335,7 @@
                 curRowHtml='<tr class="TimeSheet-row">'
                 for(var col= 0, curCell=''; col<=sheetOption.data.dimensions[1]; ++col){
                     if(col===0){
-                        curCell = '<td title="'+(sheetOption.data.rowHead[row].title ? sheetOption.data.rowHead[row].title:"")+'"class="TimeSheet-rowHead '+(row===sheetOption.data.dimensions[0]-1?'bottomMost ':' ')+'" style="'+(sheetOption.data.rowHead[row].style ? sheetOption.data.rowHead[row].style : '')+'">'+sheetOption.data.rowHead[row].name+'</td>';
+                        curCell = '<td title="'+(sheetOption.data.rowHead[row].title ? sheetOption.data.rowHead[row].title:"")+'"class="TimeSheet-rowHead '+(row===sheetOption.data.dimensions[0]-1?'bottomMost ':' ')+'" style="'+(sheetOption.data.rowHead[row].style ? sheetOption.data.rowHead[row].style : '')+'" data-row="'+row+'">'+sheetOption.data.rowHead[row].name+'</td>';
                     }else{
                         curCell = '<td class="TimeSheet-cell '+(row===sheetOption.data.dimensions[0]-1?'bottomMost ':' ')+(col===sheetOption.data.dimensions[1]?'rightMost':'')+'" data-row="'+row+'" data-col="'+(col-1)+'"></td>';
                     }
@@ -427,7 +430,7 @@
         var duringSelecting = function(ev,topLeftCell,bottomRightCell){
             var curDom = $(ev.currentTarget);
 
-            if(isSelecting && curDom.hasClass("TimeSheet-cell") || isColSelecting && curDom.hasClass("TimeSheet-colHead")){
+            if(isSelecting && curDom.hasClass("TimeSheet-cell") || isColSelecting && curDom.hasClass("TimeSheet-colHead") || isRowSelecting && curDom.hasClass("TimeSheet-rowHead")){
                 removeSelecting();
                 for(var row=topLeftCell[0]; row<=bottomRightCell[0]; ++row){
                     for(var col=topLeftCell[1]; col<=bottomRightCell[1]; ++col){
@@ -449,10 +452,10 @@
             var key = $(ev.which);
             var targetState = undefined;
 
-            if(key[0]===1){       targetState = 1;}   //鼠标左键,将选定区域置1
-            else if(key[0]===3){ targetState = 0;}   //鼠标右键,将选定区域置0
+            if(sheetModel.mode === true) targetState = 1; // autorisé
+            else targetState = 0; // bloqué
 
-            if(isSelecting && curDom.hasClass("TimeSheet-cell") || isColSelecting && curDom.hasClass("TimeSheet-colHead")){
+            if(isSelecting && curDom.hasClass("TimeSheet-cell") || isColSelecting && curDom.hasClass("TimeSheet-colHead") || isRowSelecting && curDom.hasClass("TimeSheet-rowHead")){
                 sheetModel.set(targetState,{
                     startCell : targetArea.topLeft,
                     endCell   : targetArea.bottomRight
@@ -468,6 +471,7 @@
 
             isSelecting = false;
             isColSelecting = false;
+            isRowSelecting = false;
             operationArea = {
                 startCell : undefined,
                 endCell : undefined
@@ -477,6 +481,8 @@
         var isSelecting = false;  /*鼠标在表格区域做选择*/
 
         var isColSelecting = false; /*鼠标在列表头区域做选择*/
+
+        var isRowSelecting = false; /*鼠标在列表头区域做选择*/
 
         var eventBinding = function(){
 
@@ -550,6 +556,39 @@
                 duringSelecting(ev,topLeftCell,bottomRightCell);
             });
 
+             /*列表头开始选择*/
+            thisSheet.delegate(".TimeSheet-rowHead","mousedown.umsSheetEvent",function(ev){
+                var curRowHead = $(ev.currentTarget);
+                var startCell = [curRowHead.data("row"),0];
+                isRowSelecting = true;
+                startSelecting(ev,startCell);
+            });
+
+            /*列表头选择完成*/
+            thisSheet.delegate(".TimeSheet-rowHead","mouseup.umsSheetEvent",function(ev){
+                if(!operationArea.startCell){
+                    return;
+                }
+                var curRowHead = $(ev.currentTarget);
+                var endCell = [curRowHead.data("row"), sheetOption.data.dimensions[1]-1];
+                var correctedCells = cellCompare(operationArea.startCell,endCell);
+                afterSelecting(ev,correctedCells);
+            });
+
+            /*列表头正在选择*/
+            thisSheet.delegate(".TimeSheet-rowHead","mouseover.umsSheetEvent",function(ev){
+                if(!isRowSelecting){
+                    return;
+                }
+                var curRowHead = $(ev.currentTarget);
+                var curCellIndex = [curRowHead.data("row"), sheetOption.data.dimensions[1]-1];
+                var correctedCells = cellCompare(operationArea.startCell,curCellIndex);
+                var topLeftCell = correctedCells.topLeft;
+                var bottomRightCell = correctedCells.bottomRight;
+
+                duringSelecting(ev,topLeftCell,bottomRightCell);
+            });
+
             /*表格禁止鼠标右键菜单*/
             thisSheet.delegate("td","contextmenu.umsSheetEvent",function(ev){
                 return false;
@@ -603,8 +642,8 @@
             /*
             * 重置表格
             * */
-            clean : function(){
-                sheetModel.set(0,{});
+            clean : function(mode = 0){
+                sheetModel.set(mode,{});
                 repaintSheet();
                 cleanRemark();
             },
@@ -643,7 +682,16 @@
                     }
                 }
                 return true;
-            }
+            },
+
+            /*
+            * Mode de sélection (ajouter ou enlève)
+            * @return : true or false
+            * */
+            setMode: function(mode){
+            	sheetModel.mode = mode;
+            	return sheetModel.mode;
+            },
         };
 
         return publicAPI;
