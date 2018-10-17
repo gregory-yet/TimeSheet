@@ -6,7 +6,6 @@ tbody.TimeSheet{
     color : #757a7d;
     font-size: 12px;
     cursor:default;
-    display: block;
     border-collapse: collapse;
 }
 
@@ -14,8 +13,12 @@ tbody.TimeSheet{
     border : #e3e3e3 1px solid;
 }
 
+.TimeSheet-cell {
+    background-color: #dc3545;
+}
+
 .TimeSheet-cell-selected{
-    background-color: #b4def9;
+    background-color: rgba(0, 123, 255, 0.65);
 }
 
 .TimeSheet-cell-selecting{
