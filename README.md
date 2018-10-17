@@ -1,202 +1,111 @@
-﻿# TimeSheet
-A jQuery plugin for time planning
+# TimeSheet
+A jQuery plugin for time planning (timetable) with buttons to enable or disable cells
 
-![](http://static.oschina.net/uploads/space/2015/0914/165147_Xtq0_1047422.png)  
+You can use this plugin for planification, planning and a lot of things like parental control and so on.
 
-## Get Start 
-It is simple to use TimeSheet:
+For full & initial documentation, see [TimeSheet](https://github.com/lbbc1117/TimeSheet)
 
-```javascript
-// TimeSheet has to be binded on a TBODY element
-var sheet = $("#aTbodyElement").TimeSheet({
-    data: {
-        dimensions : [2,3],
-        colHead : [{name:"00",title:"00:00"},{name:"01",title:"01:00"},{name:"02",title:"02:00"}],
-        rowHead : [{name:"2015-09-01"},{name:"2015-09-02"}],
-        sheetHead : {name:"日期\\时间"},
-        sheetData : [[0,1,1],[1,1,1]]
-    }
-});
-```
+## Changes from original plugin
 
-TimeSheet.js relies on jQuery, so jQuery must be included in your page before TimeSheet.js.
+### Enable or disable cells with buttons instead of left click and right click
+Use ``sheet.setMode(true);`` or ``sheet.setMode(false);`` to set enable mode or disable mode
+[![Image from Gyazo](https://i.gyazo.com/a642ca532368f27a997207a9fe542fb7.gif)](https://gyazo.com/a642ca532368f27a997207a9fe542fb7)
 
-```HTML
-<script type="text/javascript" src="/your/path/to/jquery-1.11.3.min.js"></script>
-<script type="text/javascript" src="/your/path/to/TimeSheet.js"></script>
-```
+### Row selecting
+You can select rows in addition to single cell and cols.
+[![Image from Gyazo](https://i.gyazo.com/63c293b7d6d4995163fae1607098d89a.gif)](https://gyazo.com/63c293b7d6d4995163fae1607098d89a)
 
-There is a css file TimeSheet.css, and it is necessary but can be partially customized to change the looking.
+### Clean mode
+Use ``sheet.clean(0);`` to disable every cells or ``sheet.clean(1);`` to enable every cells (for example in my case every cells should be enabled by default so that can be useful)
 
-## Initialization
-        
-### Initial options:
-```javascript
-/*   TimeSheet should be binded on element TBODY, and its subelements have some default classes as follow:
-*
-*   sheetHead ---- class: .TimeSheet-head
-*   colHead ---- class: .TimeSheet-colHead
-*   rowHead ---- class: .TimeSheet-rowHead
-*   cell ---- class: .TimeSheet-cell
-*/
-options :
-{
-   data : {
-       dimensions : ..., 
-       colHead : ...,
-       rowHead : ...,
-       sheetHead : ...,
-       sheetData : ...    
-   },
+## Demo code
+Use this code if you want a planning on 24 hours and 7 days. Useful for planification.
 
-   // optional options
-   sheetClass : "",
-   start : function(ev){...},
-   end : function(ev){...},
-   remarks : false
-}
-```
+```html
+<html lang="fr">
+<head>
+	<meta charset="utf-8">
+	
+	<title>Planification</title>
 
-###To specify the row numbers and the column numbers:
-```javascript
-data : {
-   dimensions : [2,3]  //[row,column]
-}
-```
+	<!-- Bootstrap core CSS -->
+	<link href="http://localhost/planification/assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="http://localhost/planification/assets/utilities/TimeSheet/TimeSheet.css">
+</head>
+<body id="planification">
+	<div class="container py-5">
+		<div class="mb-5">
+			<a href="#" class="btn btn-success" role="button" id="savePlanification">Enregistrer</a>
+			<a href="#" class="btn btn-primary" role="button" id="enablePlanification">Autorisé</a>
+			<a href="#" class="btn btn-danger" role="button" id="disablePlanification">Bloqué</a>
+		</div>
 
-###To specify the column headers:
-```javascript
-data : {
-    //"name" is to set the text shown in the header.
-    //"title" is to set the text shown when the header is hovered.
-    //"style" is css code to customize the style of the header.
-   colHead : [
-    {name:"name1",title:"",style:"width,background,color,font"},
-    {name:"name2",title:"",style:"width,background,color,font"},...
-   ]
-}
-```
-Row headers shall be initialized the same way.
+		<table class="table">
+			<thead></thead>
+			<tbody id="planning"></tbody>
+		</table>
+	</div>
+	<script>
+		var siteUrl = "http://localhost/planification/";
+	</script>
+	
+	<script type="text/javascript" src="http://localhost/planification/assets/utilities/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript" src="http://localhost/planification/assets/bootstrap/js/popper.min.js"></script>
+	<script type="text/javascript" src="http://localhost/planification/assets/bootstrap/js/bootstrap.min.js"></script>
 
-###To specify the sheet header:
-```javascript
-data : {
-    //"name" is to set the text shown in the header.
-    //"style" is css code to customize the style of the header.
-   sheetHead : {name:"headName",style:"width,height,background,color,font"}
-}
-```
+	<script type="text/javascript" src="http://localhost/planification/assets/utilities/TimeSheet/TimeSheet.js"></script>
 
-###To initialize the sheet data:
-It is a 2D, row-major ordered array. The value of it's basic elements has to be 0 or 1.
-```javascript
-data : {
-   sheetData : [[0,1,1,0,0],[...],[...],...]
-}
-```
+	
+	<script type="text/javascript">
+		var hours = [];
+		for(var i = 0; i < 24; i++){
+			var hour = i.toString().padStart(2, 0);
+			var hourNext = i+1 === 24 ? '00' : (i+1).toString().padStart(2, 0);
+			hours.push({name: hour + 'h', title: hour + ':00 - ' + hourNext + ':00'});
+		}
 
-###Add class to sheetHead:
-```javascript
-sheetClass : "userAddedClass"
-```
+		var sheetData = [];
+		for(var i = 0; i < 7; i++){
+			for(var j = 0; j < 24; j++){
+				if(typeof sheetData[i] === "undefined"){
+					sheetData[i] = [1];
+				}
+				else {
+					sheetData[i].push(1);
+				}
+			}
+		}
 
-###Specify a callback for starting selecting event:
-```javascript
-start : function(ev){
-    //...
-}
-```
+		var sheet = $('#planning').TimeSheet({
+			data: {
+				dimensions : [7,24],
+				colHead : hours,
+				rowHead : [{name:"Lundi"},{name:"Mardi"}, {name:"Mercredi"}, {name:"Jeudi"}, {name:"Vendredi"}, {name:"Samedi"}, {name:"Dimanche"}],
+				sheetHead : {name:"Planning"},
+				sheetData : sheetData
+			}
+		});
 
-###Specify a callback for ending selecting event:
-```javascript
-/*
-* @param ev 
-* @param selectedArea : the index of the top-left cell and the bottom-right cell -- {topLeft:[0,1], bottomRight:[2,2]}
-* */
-end : function(ev, selectedArea){
-    //...
-}
-```
+		$('#enablePlanification, #disablePlanification').click(function(e){
+			e.preventDefault();
 
-###Init remarks area:
-```javascript
-remarks : {
-    title : "说明",     // The remarks header
-    default : "未设置"  // The default text of row remark
-},
-```
+			var mode = $(this).attr('id') === 'enablePlanification' ? true : false;
 
+			sheet.setMode(mode);
+		});
 
-## API
-###Get the state of a single cell:
-```javascript
-/*
-* 获取单元格状态
-* @param cellIndex ：[1,2]
-* @return : 0 or 1
-* */
-sheet.getCellState([0,0]);
-```
+		$('#savePlanification').click(function(e){
+			var states = sheet.getSheetStates();
+			var disabled = [];
+			for(var i = 0; i < 7; i++){
+				for(var j = 0; j < 24; j++){
+					if(states[i][j] === 0) disabled.push({day: i + 1, hour: j, });
+				}
+			}
 
-###Get the states of a single row:
-```javascript
-/*
- * 获取某行所有单元格状态
- * @param row ：2
- * @return : [1,0,0,...,0,1]
- * */
-sheet.getRowStates(2);
-```
-
-###Get the states of whole sheet:
-```javascript
-/*
- * 获取表格所有单元格状态
- * @return : [[1,0,0,...,0,1],[1,0,0,...,0,1],...,[1,0,0,...,0,1]]
- * */
-sheet.getSheetStates();
-```
-
-###Set the remark text of a single row:
-```javascript
-/*
-* 设置某行的说明文字
-* @param row : 2,
-* @param text : '说明'
-* */
-sheet.setRemark(2,"说明");
-```
-
-###Clean the sheet (set all cells to 0):
-```javascript
-sheet.clean();
-```
-
-###Disable the sheet:
-```javascript
-sheet.disable();
-```
-
-###Enable the sheet:
-```javascript
-sheet.enable();
-```
-
-###Check if the sheet is full:
-```javascript
-/*
-* 判断表格是否所有单元格状态都是1
-* @return ： true or false
-* */
-sheet.isFull();
-```
-
-###Get the default remark text:
-```javascript
-sheet.getDefaultRemark();
-```
-
-## Example 
-A file example.html is offered to show the main functions of TimeSheet.js. Just download this whole project and unzip it, and open this html file in your browser. 
-And a demo video is available at [TimeSheet Demo](http://v.youku.com/v_show/id_XMTMzNzcxMzI0NA==.html "@Youku")
-
+			console.log(disabled);
+		});
+	</script>
+</body>
+</html>
+``
