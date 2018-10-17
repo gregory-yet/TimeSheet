@@ -1,184 +1,86 @@
-<!DOCTYPE html>
-<html>
+<html lang="fr">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>TimeSheet example</title>
+	<meta charset="utf-8">
+	
+	<title>Planification</title>
 
-    <style>
-        body{
-            font-size:12px;
-            color:#777777;
-        }
-        label{
-            width:80px;
-            display:inline-block;
-        }
-    </style>
-    <link rel="stylesheet" href="./css/TimeSheet.css" type="text/css" media="screen">
+	<!-- Bootstrap core CSS -->
+	<link href="http://localhost/planification/assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+	<link rel="stylesheet" type="text/css" href="http://localhost/planification/assets/utilities/TimeSheet/TimeSheet.css">
 </head>
-<body>
+<body id="planification">
+	<div class="container py-5">
+		<div class="mb-5">
+			<a href="#" class="btn btn-success" role="button" id="savePlanification">Enregistrer</a>
+			<a href="#" class="btn btn-primary" role="button" id="enablePlanification">Autorisé</a>
+			<a href="#" class="btn btn-danger" role="button" id="disablePlanification">Bloqué</a>
+		</div>
 
-<div style="padding:15px 0 10px;">
-    <button class="J_sheetControl" id="J_timingDisable">Disable</button>
-    <button class="J_sheetControl" id="J_timingEnable">Enable</button>
-    <button class="J_sheetControl" id="J_timingClean">Clean</button>
-    <button class="J_sheetControl" id="J_timingSubmit">Submit</button>
-    <button class="J_sheetControl" id="J_timingIsFull">IsFull</button>
-    <div style="padding:15px 0 5px;">
-        <label>单元格索引:</label><input type="text" placeholder="0,0" id="J_cellIndex" value="0,0"/> <button class="J_sheetControl" id="J_timingGetCell">GetCell</button>
-    </div>
-    <div style="padding:10px 0;">
-        <label>行索引:</label><input type="number" placeholder="0" id="J_rowIndex" value="0"/>  <button class="J_sheetControl" id="J_timingGetRow">GetRow</button>
-    </div>
-</div>
-<div id="J_calenderWrapper">
-    <table>
-        <thead></thead>
-        <tbody id="J_timedSheet">
+		<table class="table">
+			<thead></thead>
+			<tbody id="planning"></tbody>
+		</table>
+	</div>
+	<script>
+		var siteUrl = "http://localhost/planification/";
+	</script>
+	
+	<script type="text/javascript" src="http://localhost/planification/assets/utilities/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript" src="http://localhost/planification/assets/bootstrap/js/popper.min.js"></script>
+	<script type="text/javascript" src="http://localhost/planification/assets/bootstrap/js/bootstrap.min.js"></script>
 
-        </tbody>
-    </table>
-    <p style="color:#757a7d;font-size:12px;padding:10px 0;">提示：单元格与列首可通过右键点击或框选来取消选择。</p>
-</div>
+	<script type="text/javascript" src="http://localhost/planification/assets/utilities/TimeSheet/TimeSheet.js"></script>
 
-<p id="J_dataDisplay" style="color:#aaaaaa;font-family: 'Arial';">
+	
+	<script type="text/javascript">
+		var hours = [];
+		for(var i = 0; i < 24; i++){
+			var hour = i.toString().padStart(2, 0);
+			var hourNext = i+1 === 24 ? '00' : (i+1).toString().padStart(2, 0);
+			hours.push({name: hour + 'h', title: hour + ':00 - ' + hourNext + ':00'});
+		}
 
-</p>
+		var sheetData = [];
+		for(var i = 0; i < 7; i++){
+			for(var j = 0; j < 24; j++){
+				if(typeof sheetData[i] === "undefined"){
+					sheetData[i] = [1];
+				}
+				else {
+					sheetData[i].push(1);
+				}
+			}
+		}
 
-<script type="text/javascript" src="./js/jquery-1.11.3.min.js"></script>
-<script type="text/javascript" src="./js/TimeSheet.js"></script>
-<script type="text/javascript">
+		var sheet = $('#planning').TimeSheet({
+			data: {
+				dimensions : [7,24],
+				colHead : hours,
+				rowHead : [{name:"Lundi"},{name:"Mardi"}, {name:"Mercredi"}, {name:"Jeudi"}, {name:"Vendredi"}, {name:"Samedi"}, {name:"Dimanche"}],
+				sheetHead : {name:"Planning"},
+				sheetData : sheetData
+			}
+		});
 
-    var dimensions = [12,24];
+		$('#enablePlanification, #disablePlanification').click(function(e){
+			e.preventDefault();
 
-    var dayList = [
-        {name:"2015-09-01"},{name:"2015-09-02"},{name:"2015-09-03"},{name:"2015-09-04"},{name:"2015-09-05"},
-        {name:"2015-09-06"},{name:"2015-09-07"},{name:"2015-09-08"},{name:"2015-09-09"},{name:"2015-09-10"},
-        {name:"2015-09-11"},{name:"2015-09-12"}
-    ];
+			var mode = $(this).attr('id') === 'enablePlanification' ? true : false;
 
-    var hourList = [
-        {name:"00",title:"00:00-01:00"},{name:"01",title:"01:00-02:00"},{name:"02",title:"02:00-03:00"},{name:"03",title:"03:00-04:00"},
-        {name:"04",title:"04:00-05:00"},{name:"05",title:"05:00-06:00"},{name:"06",title:"06:00-07:00"},{name:"07",title:"07:00-08:00"},
-        {name:"08",title:"08:00-09:00"},{name:"09",title:"09:00-10:00"},{name:"10",title:"10:00-11:00"},{name:"11",title:"11:00-12:00"},
-        {name:"12",title:"12:00-13:00"},{name:"13",title:"13:00-14:00"},{name:"14",title:"14:00-15:00"},{name:"15",title:"15:00-16:00"},
-        {name:"16",title:"16:00-17:00"},{name:"17",title:"17:00-18:00"},{name:"18",title:"18:00-19:00"},{name:"19",title:"19:00-20:00"},
-        {name:"20",title:"20:00-21:00"},{name:"21",title:"21:00-22:00"},{name:"22",title:"22:00-23:00"},{name:"23",title:"23:00-次日00:00"}
-    ];
+			sheet.setMode(mode);
+		});
 
-    var sheetData = [
-        [1,1,1,0,1,0,1,1,1,1,1,0,1,1,1,0,0,0,0,0,0,0,0,0],
-        [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
-        [0,1,0,0,1,0,1,0,1,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0],
-        [0,1,0,0,1,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0],
-        [0,1,0,0,1,0,1,0,1,0,1,0,1,1,1,0,0,0,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [1,1,1,0,1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,0,0,0,0],
-        [1,0,0,0,1,0,1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0],
-        [1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,0,1,0,0,0,0,0,0],
-        [0,0,1,0,1,0,1,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0],
-        [1,1,1,0,1,0,1,0,1,1,1,0,1,1,1,0,0,1,0,0,0,0,0,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1]
-    ];
+		$('#savePlanification').click(function(e){
+			var states = sheet.getSheetStates();
+			var disabled = [];
+			for(var i = 0; i < 7; i++){
+				for(var j = 0; j < 24; j++){
+					if(states[i][j] === 0) disabled.push({day: i + 1, hour: j, });
+				}
+			}
 
-    var updateRemark = function(sheet){
-
-        var sheetStates = sheet.getSheetStates();
-        var rowsCount = dimensions[0];
-        var colsCount = dimensions[1];
-        var rowRemark = [];
-        var rowRemarkLen = 0;
-        var remarkHTML = '';
-
-        for(var row= 0, rowStates=[]; row<rowsCount; ++row){
-            rowRemark = [];
-            rowStates = sheetStates[row];
-            for(var col=0; col<colsCount; ++col){
-                if(rowStates[col]===0 && rowStates[col-1]===1){
-                    rowRemark[rowRemarkLen-1] += (col<=10?'0':'')+col+':00';
-                }else if(rowStates[col]===1 && (rowStates[col-1]===0 || rowStates[col-1]===undefined)){
-                    rowRemarkLen = rowRemark.push((col<=10?'0':'')+col+':00-');
-                }
-                if(rowStates[col]===1 && col===colsCount-1){
-                    rowRemark[rowRemarkLen-1] += '次日00:00';
-                }
-            }
-            remarkHTML = rowRemark.join("，");
-            sheet.setRemark(row,remarkHTML==='' ? sheet.getDefaultRemark() : remarkHTML);
-        }
-    };
-
-    $(document).ready(function(){
-
-        var sheet = $("#J_timedSheet").TimeSheet({
-            data: {
-                dimensions : dimensions,
-                colHead : hourList,
-                rowHead : dayList,
-                sheetHead : {name:"日期\\时间"},
-                sheetData : sheetData
-            },
-            remarks : {
-                title : "说明",
-                default : "未设置"
-            },
-            end : function(ev,selectedArea){
-                updateRemark(sheet);
-            }
-        });
-
-        updateRemark(sheet);
-
-        $("#J_timingDisable").click(function(ev){
-            sheet.disable();
-        });
-
-        $("#J_timingEnable").click(function(ev){
-            sheet.enable();
-        });
-
-        $("#J_timingClean").click(function(ev){
-            sheet.clean();
-        });
-
-        $("#J_timingSubmit").click(function(ev){
-
-            var sheetStates = sheet.getSheetStates();
-            var rowsCount = dimensions[0];
-            var $submitDataDisplay = $("#J_dataDisplay") ;
-
-            $submitDataDisplay.html("<b>Raw Data Submitted:</b><br/>[<br/>");
-
-            for(var row= 0, rowStates=[]; row<rowsCount; ++row){
-                rowStates = sheetStates[row];
-                $submitDataDisplay.append('&nbsp;&nbsp;[ '+rowStates+' ]'+(row==rowsCount-1?'':',')+'<br/>');
-            }
-
-            $submitDataDisplay.append(']');
-        });
-
-        $("#J_timingIsFull").click(function(ev){
-            alert(sheet.isFull());
-        });
-
-        $("#J_timingGetCell").click(function(ev){
-
-            var cellIndex = $("#J_cellIndex").val().split(',');
-            var cellData = sheet.getCellState(cellIndex);
-            var $dataDisplay = $("#J_dataDisplay") ;
-
-            $dataDisplay.html("<b>Cell Data At ["+cellIndex+"] : </b>"+cellData);
-        });
-
-        $("#J_timingGetRow").click(function(ev){
-            var rowIndex = $("#J_rowIndex").val();
-            var rowData = sheet.getRowStates(rowIndex);
-            var $dataDisplay = $("#J_dataDisplay") ;
-
-            $dataDisplay.html("<b>Row Data At "+rowIndex+" : </b>[ "+rowData+" ]");
-        });
-    });
-</script>
-
+			console.log(disabled);
+		});
+	</script>
 </body>
 </html>
